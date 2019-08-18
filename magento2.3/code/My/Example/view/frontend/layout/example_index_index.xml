@@ -1,0 +1,13 @@
+<?xml version="1.0"?>
+<page xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:View/Layout/etc/page_configuration.xsd">
+    <head>
+        <title>My Example Page</title>
+    </head>
+    <body>
+        <referenceContainer name="content">
+            <container name="exmaple.message" htmlTag="div" htmlClass="example-message" before="-">
+                <block class="My\Example\Block\Message" name="my.example.message" template="My_Example::message.phtml" />
+            </container>
+        </referenceContainer>
+    </body>
+</page>
