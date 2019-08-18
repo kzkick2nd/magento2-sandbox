@@ -1,6 +1,6 @@
 <?php
 \Magento\Framework\Component\ComponentRegistrar::register(
     \Magento\Framework\Component\ComponentRegistrar::MODULE,
-    'My_News',
+    'MyCompany_ExampleAdminNewPage',
     __DIR__
 );
