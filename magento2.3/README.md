@@ -1,0 +1,1 @@
+$ docker build --build-arg MAGENTO_MARKET_USER= --build-arg MAGENTO_MARKET_PASS= .
