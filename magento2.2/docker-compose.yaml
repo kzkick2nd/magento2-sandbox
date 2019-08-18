@@ -1,0 +1,26 @@
+version: "3"
+services:
+  db:
+    image: mysql:5.7
+    ports:
+      - '3306:3306'
+    environment:
+      MYSQL_ALLOW_EMPTY_PASSWORD: 'yes'
+      MYSQL_DATABASE: magento
+    volumes:
+      - db:/var/lib/mysql
+
+  app:
+    build:
+      context: ./
+      args:
+        - MAGENTO_MARKET_USER=
+        - MAGENTO_MARKET_PASS=
+    image: magento2
+    ports:
+      - "80:80"
+    depends_on:
+      - db
+
+volumes:
+  db:
