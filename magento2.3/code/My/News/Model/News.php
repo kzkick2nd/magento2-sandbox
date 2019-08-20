@@ -2,8 +2,9 @@
 namespace My\News\Model;
 
 use \Magento\Framework\Model\AbstractModel;
+use \My\News\Api\Data\NewsInterface;
 
-class News extends AbstractModel
+class News extends AbstractModel implements NewsInterface
 {
     /**
      * cache tag
@@ -28,6 +29,24 @@ class News extends AbstractModel
         $this->_init(
             'My\News\Model\ResourceModel\News'
         );
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getNewsId()
+    {
+        return $this->getData('news_id');
+    }
+
+    /**
+     * @param $newsId
+     * @return $this|mixed
+     */
+    public function setNewsId($newsId)
+    {
+        $this->setData('news_id', $newsId);
+        return $this;
     }
 
     /**
@@ -76,8 +95,25 @@ class News extends AbstractModel
      * @param $createAt
      * @return News
      */
-    public function setCreatedAt($createAt)
+    public function setCreatedAt($createdAt)
     {
-        return $this->setData('created_at', $createAt);
+        return $this->setData('created_at', $createdAt);
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getUpdatedAt()
+    {
+        return $this->getData('updated_at');
+    }
+
+    /**
+     * @param $updatedAt
+     * @return mixed|News
+     */
+    public function setUpdatedAt($updatedAt)
+    {
+        return $this->setData('updated_at', $updatedAt);
     }
 }
