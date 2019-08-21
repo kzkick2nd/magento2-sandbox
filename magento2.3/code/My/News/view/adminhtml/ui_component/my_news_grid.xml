@@ -162,7 +162,8 @@
                 </item>
             </argument>
         </column>
-        <actionsColumn name="actions" class="My\News\Ui\Component\Listing\Grid\Column\Action">
+        <!-- <actionsColumn name="actions" class="My\News\Ui\Component\Listing\Grid\Column\Action"> -->
+        <actionsColumn name="actions">
             <argument name="data" xsi:type="array">
                 <item name="config" xsi:type="array">
                     <item name="resizeEnabled" xsi:type="boolean">false</item>
