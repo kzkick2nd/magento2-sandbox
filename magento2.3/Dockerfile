@@ -3,7 +3,8 @@ FROM php:7.2.20-apache-buster
 ARG MAGENTO_MARKET_USER
 ARG MAGENTO_MARKET_PASS
 
-RUN mv "$PHP_INI_DIR/php.ini-development" "$PHP_INI_DIR/php.ini"
+# RUN mv "$PHP_INI_DIR/php.ini-development" "$PHP_INI_DIR/php.ini"
+COPY php.ini-development-magento "$PHP_INI_DIR/php.ini"
 
 RUN { \
     echo '<VirtualHost *:80>'; \
