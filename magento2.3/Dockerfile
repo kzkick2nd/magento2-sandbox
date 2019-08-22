@@ -55,4 +55,5 @@ WORKDIR /var/www/html/
 ADD Magento-CE-2.3.2-2019-06-13-04-07-10.tar.bz2 ./
 
 RUN composer config -g http-basic.repo.magento.com $MAGENTO_MARKET_USER $MAGENTO_MARKET_PASS
+RUN composer update
 # RUN composer require sendgrid/email-delivery-simplified:1.0.3
