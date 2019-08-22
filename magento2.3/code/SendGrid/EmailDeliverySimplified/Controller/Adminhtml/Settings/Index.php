@@ -3,10 +3,11 @@
 namespace SendGrid\EmailDeliverySimplified\Controller\Adminhtml\Settings;
 
 use \Psr\Log\LoggerInterface;
-use \Magento\Framework\Mail\Message;
 use \Magento\Backend\App\Action\Context;
-use SendGrid\EmailDeliverySimplified\Model\Transport;
-use SendGrid\EmailDeliverySimplified\Block\Adminhtml\SettingsGeneralBlock;
+
+use \Zend\Mail\Message;
+use \SendGrid\EmailDeliverySimplified\Model\Sendgrid;
+use \SendGrid\EmailDeliverySimplified\Block\Adminhtml\SettingsGeneralBlock;
 
 class Index extends \Magento\Backend\App\Action
 {
@@ -23,7 +24,7 @@ class Index extends \Magento\Backend\App\Action
   /**
    * @var SendGrid\EmailDeliverySimplified\Model\Transport
    */
-    protected $_mailTransport;
+    protected $_SendGrid;
 
   /**
    * Constructor for the Index action of the settings page
@@ -36,11 +37,11 @@ class Index extends \Magento\Backend\App\Action
         LoggerInterface $loggerInterface,
         Context $context,
         SettingsGeneralBlock $settingsBlock,
-        Transport $mailTransport
+        SendGrid $sendGrid
     ) {
         $this->_logger          = $loggerInterface;
         $this->_settingsBlock   = $settingsBlock;
-        $this->_mailTransport   = $mailTransport;
+        $this->_SendGrid        = $sendGrid;
 
         parent::__construct($context);
     }
@@ -171,19 +172,25 @@ class Index extends \Magento\Backend\App\Action
                 $mail = new Message();
 
                 $mail->setFrom($from);
-                $mail->addTo($to);
+                $mail->setTo($to);
                 $mail->setSubject($subject);
 
+                $this->_logger->debug(
+                    '[SendGrid] new Message at Index '.
+                    get_class($mail). ' : ' .
+                    print_r(get_class_methods($mail),true)
+                );
+
                 if (! empty(trim($body_text))) {
-                    $mail->setBodyText($body_text);
+                    $mail->setBody($body_text);
                 }
 
                 if (! empty(trim($body_html))) {
-                    $mail->setBodyHtml($body_html);
+                    $mail->setBody($body_html);
                 }
 
-                $this->_mailTransport->setMessage($mail);
-                $this->_mailTransport->sendMessage();
+                $this->_SendGrid->setInfo($mail);
+                $this->_SendGrid->sendMessage();
             } catch (\Exception $e) {
                 $this->_logger->debug('[SendGrid] Error occured in send mail test : ' . $e->getMessage());
                 $errors[] = 'The email could not be sent. Please check your settings and try again.';

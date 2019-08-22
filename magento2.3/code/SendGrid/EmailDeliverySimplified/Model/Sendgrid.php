@@ -3,19 +3,20 @@
 namespace SendGrid\EmailDeliverySimplified\Model;
 
 use \Psr\Log\LoggerInterface;
-use \Magento\Framework\Phrase;
-use \Magento\Framework\Mail\MessageInterface;
-use \Magento\Framework\Exception\MailException;
-use \Magento\Framework\Mail\TransportInterface;
 use \Magento\Framework\Module\Manager;
 use SendGrid\EmailDeliverySimplified\Helper\API;
 use SendGrid\EmailDeliverySimplified\Helper\Tools;
 use SendGrid\EmailDeliverySimplified\Model\GeneralSettings;
 
-class Transport extends \Zend_Mail_Transport_Smtp implements TransportInterface
+use Magento\Framework\Exception\MailException;
+use Magento\Framework\Phrase;
+use \Zend\Mail\Message;
+
+class SendGrid
 {
+
   /**
-   * @var \Magento\Framework\Mail\MessageInterface
+   * @var \Zend\Mail\Message
    */
     protected $_message;
 
@@ -35,55 +36,26 @@ class Transport extends \Zend_Mail_Transport_Smtp implements TransportInterface
     protected $_moduleManager;
 
   /**
-   * @const   string  SendGrid SMTP hostname
-   */
-    const SMTP_HOSTNAME = 'smtp.sendgrid.net';
-
-  /**
-   * @param   MessageInterface  $message
+   * @param   Message           $message
    * @param   GeneralSettings   $generalSettings
    * @param   LoggerInterface   $loggerInterface
    * @throws  \InvalidArgumentException
    */
     public function __construct(
-        MessageInterface $message,
-        GeneralSettings $generalSettings,
-        LoggerInterface $loggerInterface,
-        Manager         $moduleManager
+        Message          $message,
+        GeneralSettings  $generalSettings,
+        LoggerInterface  $loggerInterface,
+        Manager          $moduleManager
     ) {
-        if (! $message instanceof \Zend_Mail) {
-            throw new \InvalidArgumentException('The message should be an instance of \Zend_Mail');
-        }
-
-        $this->_logger          = $loggerInterface;
         $this->_message         = $message;
         $this->_generalSettings = $generalSettings;
+        $this->_logger          = $loggerInterface;
         $this->_moduleManager   = $moduleManager;
-   
-        $smtp_port = $this->_generalSettings->getSMTPPort();
-        if (empty($smtp_port)) {
-            $smtp_port = 587;
-        }
 
         $apikey = $this->_generalSettings->getAPIKey();
-        if (empty($apikey) || ! $this->_moduleManager->isOutputEnabled('SendGrid_EmailDeliverySimplified')) {
-            parent::__construct();
 
-            return;
-        }
-
-        $smtp_conf = [
-        'auth'     => 'login',
-        'ssl'      => 'tls',
-        'port'     => $smtp_port,
-        'username' => 'apikey',
-        'password' => $apikey
-        ];
-    
         $this->_updateInternalMessage();
         $this->_sent = false;
-
-        parent::__construct(self::SMTP_HOSTNAME, $smtp_conf);
     }
 
   /**
@@ -115,26 +87,20 @@ class Transport extends \Zend_Mail_Transport_Smtp implements TransportInterface
             $xsmtpapi_header['asm_group_id'] = intval($asm_group_id);
         }
 
-        $this->_message->addHeader('x-smtpapi', json_encode($xsmtpapi_header));
-
         if (! empty($from)) {
-            $this->_message->clearFrom();
             $this->_message->setFrom($from);
         }
 
         if (! empty($from_name) and ! empty($from)) {
-            $this->_message->clearFrom();
             $this->_message->setFrom($from, $from_name);
         }
 
         if (! empty($from_name) and empty($from)) {
             $initial_from = $this->_message->getFrom();
-            $this->_message->clearFrom();
             $this->_message->setFrom($initial_from, $from_name);
         }
 
         if (! empty($reply_to)) {
-            $this->_message->clearReplyTo();
             $this->_message->setReplyTo($reply_to);
         }
     }
@@ -158,10 +124,17 @@ class Transport extends \Zend_Mail_Transport_Smtp implements TransportInterface
         $categories[] = 'magento2_sendgrid_plugin';
 
         // Message values
-        $recipients = $this->_message->getRecipients();
+
+        $this->_logger->debug(
+            '[SendGrid] ZendMessage '.
+            get_class($this->_message). ' : ' .
+            print_r(get_class_methods($this->_message),true)
+        );
+
+        $recipients = $this->_message->getTo();
         $subject    = trim($this->_message->getSubject());
-        $text       = $this->_message->getBodyText(false);
-        $html       = $this->_message->getBodyHtml(false);
+        $text       = $this->_message->getBody(false);
+        $html       = $this->_message->getBody(false);
 
         if ($text instanceof \Zend_Mime_Part) {
             $text = $text->getRawContent();
@@ -187,7 +160,13 @@ class Transport extends \Zend_Mail_Transport_Smtp implements TransportInterface
 
         // Add To's
         foreach ($recipients as $to) {
-            $email = new API\Email(null, trim($to));
+            $this->_logger->debug(
+                '[SendGrid] ZendMessage '.
+                get_class($this->_message).
+                $to->getEmail()
+            );
+
+            $email = new API\Email(null, $to->getEmail());
             $personalization->addTo($email);
         }
 
@@ -233,18 +212,6 @@ class Transport extends \Zend_Mail_Transport_Smtp implements TransportInterface
         $mail->setSubject($subject);
         $mail->addPersonalization($personalization);
 
-        // Attachments
-        $parts = $this->_message->getParts();
-        foreach ($parts as $part) {
-            $attachment = new API\Attachment();
-            $attachment->setContent(base64_encode($part->getRawContent()));
-            $attachment->setType($part->type);
-            $attachment->setFilename($part->filename);
-            $attachment->setDisposition($part->disposition);
-
-            $mail->addAttachment($attachment);
-        }
-
         // asm group id
         if ($asm_group_id != false and $asm_group_id != 0) {
             $asm = new API\ASM();
@@ -259,15 +226,12 @@ class Transport extends \Zend_Mail_Transport_Smtp implements TransportInterface
   /**
    * Sets the message
    *
-   * @param   MessageInterface  $message
+   * @param   Message $message
    * @return  void
    * @throws  \Magento\Framework\Exception\MailException
    */
-    public function setMessage(MessageInterface $message)
+    public function setInfo(Message $message)
     {
-        if (! $message instanceof \Zend_Mail) {
-            throw new \InvalidArgumentException('The message should be an instance of \Zend_Mail');
-        }
 
         $this->_message = $message;
         $this->_updateInternalMessage();
@@ -285,7 +249,6 @@ class Transport extends \Zend_Mail_Transport_Smtp implements TransportInterface
             $this->_logger->debug('[SendGrid] Sending email.');
 
             $apikey = $this->_generalSettings->getAPIKey();
-            $send_method = $this->_generalSettings->getSendMethod();
 
             if (! $this->_moduleManager->isOutputEnabled('SendGrid_EmailDeliverySimplified')) {
                 $this->_logger->debug('[SendGrid] Module is not enabled. Email is sent via vendor Zend Mail.');
@@ -294,31 +257,26 @@ class Transport extends \Zend_Mail_Transport_Smtp implements TransportInterface
                 return;
             }
 
-            if ('smtp' == $send_method or empty(trim($apikey))) {
-                parent::send($this->_message);
-            } else {
-                // Compose JSON payload of email send request
-                $payload = $this->_getAPIMessage();
+            // Compose JSON payload of email send request
+            $payload = $this->_getAPIMessage();
 
-                // Mail send URL
-                $url = Tools::SG_API_URL . 'v3/mail/send';
+            // Mail send URL
+            $url = Tools::SG_API_URL . 'v3/mail/send';
 
-                // Request headers
-                $headers = [ 'Authorization' => 'Bearer ' . $apikey ];
+            // Request headers
+            $headers = [ 'Authorization' => 'Bearer ' . $apikey ];
 
-                // Send request
-                $client = new \Zend_Http_Client($url, [ 'strict' => true ]);
+            // Send request
+            $client = new \Zend_Http_Client($url, [ 'strict' => true ]);
 
-                $response = $client->setHeaders($headers)
-                           ->setRawData(json_encode($payload), 'application/json')
-                           ->request('POST');
+            $response = $client->setHeaders($headers)
+                        ->setRawData(json_encode($payload), 'application/json')
+                        ->request('POST');
 
-                // Process response
-                if (202 != $response->getStatus()) {
-                    $response = $response->getBody();
-
-                    throw new \Exception($response);
-                }
+            // Process response
+            if (202 != $response->getStatus()) {
+                $response = $response->getBody();
+                throw new \Exception($response);
             }
         } catch (\Exception $e) {
             $this->_logger->debug('[SendGrid] Error sending email : ' . $e->getMessage());
