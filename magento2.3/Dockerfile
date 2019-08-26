@@ -1,4 +1,4 @@
-FROM php:7.2.20-apache-buster
+FROM php:7.2.21-apache-buster
 
 ARG MAGENTO_MARKET_USER
 ARG MAGENTO_MARKET_PASS
