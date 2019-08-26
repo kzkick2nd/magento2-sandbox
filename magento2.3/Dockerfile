@@ -1,4 +1,4 @@
-FROM php:7.2.20-apache-buster
+FROM php:7.2.21-apache-buster
 
 ARG MAGENTO_MARKET_USER
 ARG MAGENTO_MARKET_PASS
@@ -46,13 +46,13 @@ RUN docker-php-ext-install \
     bcmath \
     sodium
 
-RUN  a2enmod rewrite
 RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
 RUN chown www-data:www-data /var/www
 
-USER www-data
 WORKDIR /var/www/html/
 ADD Magento-CE-2.3.2-2019-06-13-04-07-10.tar.bz2 ./
 
 RUN composer config -g http-basic.repo.magento.com $MAGENTO_MARKET_USER $MAGENTO_MARKET_PASS
+RUN composer update
+RUN chown -R www-data:www-data ./
 # RUN composer require sendgrid/email-delivery-simplified:1.0.3

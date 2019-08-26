@@ -1,0 +1,19 @@
+{
+  "name": "sendgrid/email-delivery-simplified",
+  "description": "SendGrid Email Delivery",
+  "type": "magento2-module",
+  "version": "1.0.4",
+  "license": [
+    "MIT"
+  ],
+  "require": {
+    "php": ">=5.6",
+    "magento/framework": "*"
+  },
+  "autoload": {
+    "files": [ "registration.php" ],
+    "psr-4": {
+      "SendGrid\\EmailDeliverySimplified\\": ""
+    }
+  }
+}
