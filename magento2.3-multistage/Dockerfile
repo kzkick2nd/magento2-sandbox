@@ -46,11 +46,12 @@ RUN composer require community-engineering/japan-common
 RUN chmod +x bin/magento
 
 
-
 FROM php:7.2.21-apache-buster
 
 # RUN mv "$PHP_INI_DIR/php.ini-development" "$PHP_INI_DIR/php.ini"
 COPY php.ini-development-magento "$PHP_INI_DIR/php.ini"
+# Change apachg2 port to 8080 for rootless Docker run
+RUN sed -i "s/80/8080/g" /etc/apache2/sites-available/000-default.conf /etc/apache2/ports.conf
 
 RUN { \
     echo '<VirtualHost *:80>'; \
@@ -92,5 +93,6 @@ RUN docker-php-ext-install \
 RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
 RUN chown www-data:www-data /var/www
 
+USER www-data
 WORKDIR /var/www/html/
 COPY --from=Build --chown=www-data:www-data /var/www/html /var/www/html
