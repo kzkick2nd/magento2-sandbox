@@ -54,9 +54,9 @@ COPY php.ini-development-magento "$PHP_INI_DIR/php.ini"
 RUN sed -i "s/80/8080/g" /etc/apache2/sites-available/000-default.conf /etc/apache2/ports.conf
 
 RUN { \
-    echo '<VirtualHost *:80>'; \
-    echo '  DocumentRoot /var/www/html'; \
-    echo '  <Directory /var/www/html>'; \
+    echo '<VirtualHost *:8080>'; \
+    echo '  DocumentRoot /var/www/magento'; \
+    echo '  <Directory /var/www/magento>'; \
     echo '    AllowOverride All'; \
     echo '  </Directory>'; \
     echo '</VirtualHost>'; \
@@ -91,8 +91,8 @@ RUN docker-php-ext-install \
     bcmath
 
 RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
-RUN chown www-data:www-data /var/www
+RUN mkdir -p /var/www/magento && chown www-data:www-data /var/www /var/www/magento
 
 USER www-data
-WORKDIR /var/www/html/
-COPY --from=Build --chown=www-data:www-data /var/www/html /var/www/html
+WORKDIR /var/www/magento/
+COPY --from=Build --chown=www-data:www-data /var/www/html /var/www/magento
