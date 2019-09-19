@@ -18,7 +18,7 @@ services:
         MAGENTO_MARKET_USER: ${MAGENTO_MARKET_USER}
         MAGENTO_MARKET_PASS: ${MAGENTO_MARKET_PASS}
     ports:
-      - "80:80"
+      - "80:8080"
     depends_on:
       - db
 

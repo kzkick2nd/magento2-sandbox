@@ -1,4 +1,4 @@
-FROM php:7.2.21-cli-buster AS Build
+FROM php:7.2.22-cli-buster AS Build
 
 ARG MAGENTO_MARKET_USER
 ARG MAGENTO_MARKET_PASS
@@ -43,10 +43,11 @@ WORKDIR /var/www/html/
 RUN composer config -g http-basic.repo.magento.com $MAGENTO_MARKET_USER $MAGENTO_MARKET_PASS
 RUN composer create-project --repository=https://repo.magento.com/ magento/project-community-edition ./
 RUN composer require community-engineering/japan-common
+RUN composer update
 RUN chmod +x bin/magento
 
 
-FROM php:7.2.21-apache-buster
+FROM php:7.2.22-apache-buster
 
 # RUN mv "$PHP_INI_DIR/php.ini-development" "$PHP_INI_DIR/php.ini"
 COPY php.ini-development-magento "$PHP_INI_DIR/php.ini"
@@ -54,9 +55,9 @@ COPY php.ini-development-magento "$PHP_INI_DIR/php.ini"
 RUN sed -i "s/80/8080/g" /etc/apache2/sites-available/000-default.conf /etc/apache2/ports.conf
 
 RUN { \
-    echo '<VirtualHost *:80>'; \
-    echo '  DocumentRoot /var/www/html'; \
-    echo '  <Directory /var/www/html>'; \
+    echo '<VirtualHost *:8080>'; \
+    echo '  DocumentRoot /var/www/magento'; \
+    echo '  <Directory /var/www/magento>'; \
     echo '    AllowOverride All'; \
     echo '  </Directory>'; \
     echo '</VirtualHost>'; \
@@ -77,7 +78,8 @@ RUN apt-get update \
     libicu-dev \
     libxslt1-dev \
     default-mysql-client \
-    libsodium-dev
+    libsodium-dev \
+    cron
 
 RUN docker-php-ext-configure gd --with-freetype-dir=/usr/include/ --with-jpeg-dir=/usr/include/
 
@@ -91,8 +93,8 @@ RUN docker-php-ext-install \
     bcmath
 
 RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
-RUN chown www-data:www-data /var/www
+RUN mkdir -p /var/www/magento && chown www-data:www-data /var/www /var/www/magento
 
 USER www-data
-WORKDIR /var/www/html/
-COPY --from=Build --chown=www-data:www-data /var/www/html /var/www/html
+WORKDIR /var/www/magento/
+COPY --from=Build --chown=www-data:www-data /var/www/html /var/www/magento
