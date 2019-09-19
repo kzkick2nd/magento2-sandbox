@@ -1,4 +1,4 @@
-FROM php:7.2.21-cli-buster AS Build
+FROM php:7.2.22-cli-buster AS Build
 
 ARG MAGENTO_MARKET_USER
 ARG MAGENTO_MARKET_PASS
@@ -43,10 +43,11 @@ WORKDIR /var/www/html/
 RUN composer config -g http-basic.repo.magento.com $MAGENTO_MARKET_USER $MAGENTO_MARKET_PASS
 RUN composer create-project --repository=https://repo.magento.com/ magento/project-community-edition ./
 RUN composer require community-engineering/japan-common
+RUN composer update
 RUN chmod +x bin/magento
 
 
-FROM php:7.2.21-apache-buster
+FROM php:7.2.22-apache-buster
 
 # RUN mv "$PHP_INI_DIR/php.ini-development" "$PHP_INI_DIR/php.ini"
 COPY php.ini-development-magento "$PHP_INI_DIR/php.ini"
@@ -77,7 +78,8 @@ RUN apt-get update \
     libicu-dev \
     libxslt1-dev \
     default-mysql-client \
-    libsodium-dev
+    libsodium-dev \
+    cron
 
 RUN docker-php-ext-configure gd --with-freetype-dir=/usr/include/ --with-jpeg-dir=/usr/include/
 
