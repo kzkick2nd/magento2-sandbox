@@ -34,7 +34,7 @@ RUN docker-php-ext-install \
     soap \
     bcmath
 
-RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
+RUN curl -sS https://getcomposer.org/installer | php -d memory_limit=-1 -- --install-dir=/usr/local/bin --filename=composer
 RUN chown www-data:www-data /var/www
 
 # TODO: Move Magento2 installation commands to entrypoint.sh
@@ -45,7 +45,6 @@ RUN composer create-project --repository=https://repo.magento.com/ magento/proje
 RUN composer require community-engineering/japan-common
 RUN composer update
 RUN chmod +x bin/magento
-
 
 FROM php:7.2.22-apache-buster
 
@@ -92,7 +91,7 @@ RUN docker-php-ext-install \
     soap \
     bcmath
 
-RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
+RUN curl -sS https://getcomposer.org/installer | php -d memory_limit=-1 -- --install-dir=/usr/local/bin --filename=composer
 RUN mkdir -p /var/www/magento && chown www-data:www-data /var/www /var/www/magento
 
 USER www-data
