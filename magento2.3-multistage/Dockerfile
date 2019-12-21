@@ -1,4 +1,4 @@
-FROM php:7.2.22-cli-buster AS Build
+FROM php:7.2.24-cli-buster AS Build
 
 ARG MAGENTO_MARKET_USER
 ARG MAGENTO_MARKET_PASS
@@ -46,7 +46,7 @@ RUN composer require community-engineering/japan-common
 RUN composer update
 RUN chmod +x bin/magento
 
-FROM php:7.2.22-apache-buster
+FROM php:7.2.24-apache-buster
 
 # RUN mv "$PHP_INI_DIR/php.ini-development" "$PHP_INI_DIR/php.ini"
 COPY php.ini-development-magento "$PHP_INI_DIR/php.ini"
